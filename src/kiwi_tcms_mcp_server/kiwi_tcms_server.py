@@ -3,10 +3,11 @@ from dotenv import load_dotenv
 import os
 import ssl
 import urllib3
-from typing import Any, LiteralString, Optional, Annotated
+from typing import Any, LiteralString, Optional, Annotated, Union
 from datetime import datetime
 from fastmcp import FastMCP
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_serializer, field_validator
+import xmlrpc.client
 
 
 # SSL証明書の警告を無効化（開発環境用）
@@ -61,8 +62,10 @@ class TestCaseStatus(BaseModel):
 class TestCase(BaseModel):
     """テストケースを表現するモデル"""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     id: int = Field(description="テストケースのid")
-    create_date: Any = Field(description="作成日時")  # DateTime object from API
+    create_date: Optional[Union[xmlrpc.client.DateTime, str]] = Field(description="作成日時", default=None)
     is_automated: bool = Field(description="自動化されているか")
     script: str = Field(description="自動化スクリプト")
     arguments: str = Field(description="引数")
@@ -97,14 +100,29 @@ class TestCase(BaseModel):
     )
     expected_duration: Optional[float] = Field(description="予想時間", default=None)
 
+    @field_validator('create_date', mode='before')
+    @classmethod
+    def convert_datetime(cls, value):
+        if isinstance(value, xmlrpc.client.DateTime):
+            return str(value)
+        return value
+
+    @field_serializer('create_date')
+    def serialize_datetime(self, value, _info):
+        if isinstance(value, xmlrpc.client.DateTime):
+            return str(value)
+        return value
+
 
 class TestPlan(BaseModel):
     """テスト計画を表現するモデル"""
 
+    model_config = {"arbitrary_types_allowed": True}
+
     id: int = Field(description="テスト計画のid")
     name: str = Field(description="テスト計画の名前")
     text: str = Field(description="テスト計画の説明")
-    create_date: Any = Field(description="作成日時")  # DateTime object from API
+    create_date: Optional[Union[xmlrpc.client.DateTime, str]] = Field(description="作成日時", default=None)
     is_active: bool = Field(description="有効かどうか")
     extra_link: Optional[str] = Field(description="追加リンク", default=None)
     product_version: int = Field(description="製品バージョンのid")
@@ -117,6 +135,19 @@ class TestPlan(BaseModel):
     type__name: str = Field(description="タイプ名")
     parent: Optional[int] = Field(description="親テスト計画のid", default=None)
     children__count: int = Field(description="子テスト計画の数")
+
+    @field_validator('create_date', mode='before')
+    @classmethod
+    def convert_datetime(cls, value):
+        if isinstance(value, xmlrpc.client.DateTime):
+            return str(value)
+        return value
+
+    @field_serializer('create_date')
+    def serialize_datetime(self, value, _info):
+        if isinstance(value, xmlrpc.client.DateTime):
+            return str(value)
+        return value
 
 
 @mcp.tool()
@@ -162,7 +193,7 @@ def create_testcase(
     category: int = Field(description="カテゴリのid"),
     priority: int = Field(description="優先度のid"),
     case_status: int = Field(description="ステータスのid"),
-) -> TestCase:
+) -> dict:
     """テストケースを新規作成する"""
     value = {
         "summary": summary,
@@ -172,7 +203,11 @@ def create_testcase(
         "case_status": case_status,
     }
     res: dict[str: Any] = rpc.TestCase.create(value) # type: ignore
-    return TestCase(**res)
+    # Convert xmlrpc.DateTime objects to string
+    if 'create_date' in res and hasattr(res['create_date'], 'value'):
+        res['create_date'] = str(res['create_date'])
+    test_case = TestCase(**res)
+    return test_case.model_dump()
 
 
 @mcp.tool()
