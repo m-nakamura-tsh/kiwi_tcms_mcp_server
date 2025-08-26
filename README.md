@@ -17,7 +17,14 @@ uv run runserver
 uvx でも実行可能
 
 ```
-uvx --from git+https://github.com/myusername/my-cli.git runserver
+uvx --from https://github.com/m-nakamura-tsh/kiwi_tcms_mcp_server.git runserver
+```
+
+`.env` で環境変数を指定している場合は、以下のコマンドで実行できる
+
+
+```
+ env $(cat .env | xargs) uvx --from https://github.com/m-nakamura-tsh/kiwi_tcms_mcp_server.git runserver
 ```
 
 # Kiwi TCMS の XML-RPC から操作できるオブジェクトとメソッドについて
