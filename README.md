@@ -1,9 +1,12 @@
 # 利用方法
 実行ディレクトリに `.env` ファイルを作成し、下記の環境変数を設定する。
 
-`TCMS_URL` : kiwi tcms の xml-rpc エンドポイント。ローカルの docker compose で利用している場合は、 `https://localhost/xml-rpc/` になる
-`TCMS_USER` : kiwi tcms のログインユーザー名
-`TCMS_PASSWORD` : kiw_tcms のログインパスワード
+* `TCMS_URL` : kiwi tcms の xml-rpc エンドポイント。ローカルの docker compose で利用している場合は、 `https://localhost/xml-rpc/` になる
+* `TCMS_USER` : kiwi tcms のログインユーザー名
+* `TCMS_PASSWORD` : kiw_tcms のログインパスワード
+* `TCMS_VERIFY_SSL` : SSL証明書検証を行うかどうか（開発環境はfalse）
+
+**注意**: 本番環境では必ず`TCMS_VERIFY_SSL=true`に設定し、適切な証明書を使用してください。
 
 パッケージがインストールされた状態で、以下を実行する。
 
@@ -22,40 +25,6 @@ uvx --from git+https://github.com/myusername/my-cli.git runserver
 ## 概要
 Kiwi TCMS のAPIをPythonから利用するためのサンプルスクリプトと、利用可能なAPIオブジェクト・メソッドの詳細情報です。
 
-## セットアップ
-
-### 必要な環境変数
-`.env`ファイルに以下の環境変数を設定してください：
-
-```bash
-TCMS_URL=https://localhost/xml-rpc/  # XML-RPCエンドポイントURL
-TCMS_USER=username                    # ユーザー名
-TCMS_PASSWORD=password                # パスワード
-TCMS_VERIFY_SSL=false                 # SSL証明書検証（開発環境はfalse）
-```
-
-### 依存パッケージのインストール
-```bash
-uv sync
-```
-
-## SSL証明書エラーへの対処
-開発環境で自己署名証明書を使用している場合、SSL証明書検証エラーが発生します。
-本スクリプトでは、環境変数`TCMS_VERIFY_SSL=false`を設定することで、SSL証明書の検証を無効化できます。
-
-**注意**: 本番環境では必ず`TCMS_VERIFY_SSL=true`に設定し、適切な証明書を使用してください。
-
-## 基本的な接続方法
-```python
-from tcms_api import TCMS
-import ssl
-
-# SSL証明書の検証を無効化（開発環境のみ）
-ssl._create_default_https_context = ssl._create_unverified_context
-
-# API接続
-rpc = TCMS(url, username, password).exec
-```
 
 ## 利用可能なAPIオブジェクトとメソッド
 
