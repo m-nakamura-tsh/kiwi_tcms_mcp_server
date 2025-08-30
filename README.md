@@ -6,12 +6,12 @@
 * `TCMS_PASSWORD` : kiw_tcms のログインパスワード
 * `TCMS_VERIFY_SSL` : SSL証明書検証を行うかどうか（開発環境はfalse）
 
-**注意**: 本番環境では必ず`TCMS_VERIFY_SSL=true`に設定し、適切な証明書を使用してください。
+**注意**: 本番環境では必ず`TCMS_VERIFY_SSL=true`に設定すること
 
-パッケージがインストールされた状態で、以下を実行する。
+ソースが手元にある場合は、スクリプトからサーバーを起動できる。
 
 ```
-uv run runserver
+uv run python kiwi_tcms_server.py
 ```
 
 uvx でも実行可能
@@ -27,13 +27,27 @@ uvx --from https://github.com/m-nakamura-tsh/kiwi_tcms_mcp_server.git runserver
  env $(cat .env | xargs) uvx --from https://github.com/m-nakamura-tsh/kiwi_tcms_mcp_server.git runserver
 ```
 
-# Kiwi TCMS の XML-RPC から操作できるオブジェクトとメソッドについて
+### MCP Server の tools 確認方法
 
-## 概要
-Kiwi TCMS のAPIをPythonから利用するためのサンプルスクリプトと、利用可能なAPIオブジェクト・メソッドの詳細情報です。
+[modelcontextprotocol/inspector: Visual testing tool for MCP servers](https://github.com/modelcontextprotocol/inspector) を利用すると、どのようなtoolsが公開されているかを確認できる。
+Webインタフェースがあるので便利。
 
+以下コマンドでWebインタフェースが起動する。
 
-## 利用可能なAPIオブジェクトとメソッド
+```
+npx @modelcontextprotocol/inspector uv run python kiwi_tcms_server.py
+```
+
+# 参考
+
+## 参考ドキュメント
+- [Kiwi TCMS Documentation](https://kiwitcms.readthedocs.io/)
+- [tcms-api Python Package](https://github.com/kiwitcms/tcms-api)
+- [Kiwi TCMS XML-RPC API](https://kiwitcms.readthedocs.io/en/latest/modules/tcms.rpc.api.html)
+
+## Kiwi TCMS の XML-RPC から操作できるオブジェクトとメソッドについて
+
+MCP Server内で利用している、Kiwi TCMS の XML-RPC についての補足説明。
 
 ### 前提知識
 
@@ -90,7 +104,9 @@ def create(values, **kwargs):
 
 ```
 
-### TestPlan - テストプラン管理
+### 主なオブジェクトとメソッド
+
+#### TestPlan - テストプラン管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | テストプランを検索 | `{"is_active": True}` |
@@ -105,7 +121,7 @@ def create(values, **kwargs):
 | `add_attachment(plan_id, filename, b64content)` | 添付ファイル追加 | `plan_id, "file.txt", base64_content` |
 | `tree(plan_id)` | プランツリー取得 | `plan_id` |
 
-### TestCase - テストケース管理
+#### TestCase - テストケース管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | テストケース検索 | `{"plan": plan_id}` |
@@ -130,7 +146,7 @@ def create(values, **kwargs):
 | `add_property(case_id, name, value)` | プロパティ追加 | `case_id, "key", "value"` |
 | `remove_property(query)` | プロパティ削除 | `{"case": case_id, "name": "key"}` |
 
-### TestRun - テストラン管理
+#### TestRun - テストラン管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | テストラン検索 | `{"plan": plan_id}` |
@@ -147,7 +163,7 @@ def create(values, **kwargs):
 | `properties(query)` | プロパティ取得 | `{"run": run_id}` |
 | `add_attachment(run_id, filename, b64content)` | 添付ファイル追加 | `run_id, "file.txt", base64_content` |
 
-### TestExecution - テスト実行管理
+#### TestExecution - テスト実行管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | テスト実行検索 | `{"run": run_id}` |
@@ -162,50 +178,50 @@ def create(values, **kwargs):
 | `get_links(query)` | リンク一覧取得 | `{"execution": exec_id}` |
 | `properties(query)` | プロパティ取得 | `{"execution": exec_id}` |
 
-### Bug - バグ管理
+#### Bug - バグ管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `details(url)` | バグ詳細取得 | `"http://bugtracker/123"` |
 | `report(execution_id, tracker_id)` | バグ報告 | `execution_id, tracker_id` |
 
-### Product - プロダクト管理
+#### Product - プロダクト管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | プロダクト検索 | `{}` |
 | `create(values)` | 新規プロダクト作成 | `{"name": "製品名", "classification": class_id}` |
 
-### Version - バージョン管理
+#### Version - バージョン管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | バージョン検索 | `{"product": product_id}` |
 | `create(values)` | 新規バージョン作成 | `{"value": "1.0", "product": product_id}` |
 
-### Build - ビルド管理
+#### Build - ビルド管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | ビルド検索 | `{"version": version_id}` |
 | `create(values)` | 新規ビルド作成 | `{"name": "build-001", "version": version_id}` |
 | `update(build_id, values)` | ビルド更新 | `build_id, {"is_active": False}` |
 
-### Category - カテゴリー管理
+#### Category - カテゴリー管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | カテゴリー検索 | `{"product": product_id}` |
 | `create(values)` | 新規カテゴリー作成 | `{"name": "カテゴリー名", "product": product_id}` |
 
-### Component - コンポーネント管理
+#### Component - コンポーネント管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | コンポーネント検索 | `{"product": product_id}` |
 | `create(values)` | 新規コンポーネント作成 | `{"name": "コンポーネント名", "product": product_id}` |
 | `update(component_id, values)` | コンポーネント更新 | `component_id, {"name": "新しい名前"}` |
 
-### Tag - タグ管理
+#### Tag - タグ管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | タグ検索 | `{}` |
 
-### User - ユーザー管理
+#### User - ユーザー管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | ユーザー検索 | `{"username": "user1"}` |
@@ -213,7 +229,7 @@ def create(values, **kwargs):
 | `join_group(username, groupname)` | グループ追加 | `"user1", "group1"` |
 | `add_attachment(filename, b64content)` | プロフィール画像追加 | `"avatar.png", base64_content` |
 
-### Environment - 環境管理
+#### Environment - 環境管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | 環境検索 | `{}` |
@@ -222,59 +238,59 @@ def create(values, **kwargs):
 | `add_property(environment_id, name, value)` | プロパティ追加 | `env_id, "key", "value"` |
 | `remove_property(query)` | プロパティ削除 | `{"environment": env_id, "name": "key"}` |
 
-### Priority - 優先度管理
+#### Priority - 優先度管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | 優先度検索 | `{"is_active": True}` |
 
-### Classification - 分類管理
+#### Classification - 分類管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | 分類検索 | `{}` |
 | `create(values)` | 新規分類作成 | `{"name": "分類名"}` |
 
-### PlanType - テストプランタイプ
+#### PlanType - テストプランタイプ
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | プランタイプ検索 | `{}` |
 | `create(values)` | 新規プランタイプ作成 | `{"name": "タイプ名"}` |
 
-### TestCaseStatus - テストケースステータス
+#### TestCaseStatus - テストケースステータス
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | ステータス検索 | `{"is_confirmed": True}` |
 
-### TestExecutionStatus - テスト実行ステータス
+#### TestExecutionStatus - テスト実行ステータス
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `filter(query)` | ステータス検索 | `{}` |
 
-### 特殊なオブジェクト
+### 特殊なオブジェクトとメソッド
 
-#### KiwiTCMS - システム情報
+##### KiwiTCMS - システム情報
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `version()` | バージョン取得 | なし |
 
-#### Auth - 認証
+##### Auth - 認証
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `login(username, password)` | ログイン | `"user", "pass"` |
 | `logout()` | ログアウト | なし |
 
-#### Markdown - Markdown処理
+##### Markdown - Markdown処理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `render(text)` | MarkdownをHTMLに変換 | `"**bold text**"` |
 
-#### Attachment - 添付ファイル管理
+##### Attachment - 添付ファイル管理
 | メソッド | 説明 | パラメータ例 |
 |---------|------|-------------|
 | `remove_attachment(attachment_id)` | 添付ファイル削除 | `attachment_id` |
 
-## 使用例
+### RPCの使用例
 
-### テストプランの操作
+#### テストプランの操作
 ```python
 # すべてのテストプランを取得
 test_plans = rpc.TestPlan.filter({})
@@ -291,7 +307,7 @@ new_plan = rpc.TestPlan.create({
 rpc.TestPlan.add_case(new_plan["id"], case_id)
 ```
 
-### テストランの実行
+#### テストランの実行
 ```python
 # テストランを作成
 test_run = rpc.TestRun.create({
@@ -310,7 +326,7 @@ for execution in executions:
     })
 ```
 
-### バグ報告との連携
+#### バグ報告との連携
 ```python
 # テスト実行にバグリンクを追加
 rpc.TestExecution.add_link({
@@ -318,31 +334,4 @@ rpc.TestExecution.add_link({
     "url": "https://bugtracker.example.com/bug/123",
     "name": "Bug #123"
 })
-```
-
-## スクリプト一覧
-
-- `kiwi_tcms_server.py` - kiwi_tcms の rpc 各種メソッドをwrapした、mcpサーバー 
-
-## 参考資料
-- [Kiwi TCMS Documentation](https://kiwitcms.readthedocs.io/)
-- [tcms-api Python Package](https://github.com/kiwitcms/tcms-api)
-- [Kiwi TCMS XML-RPC API](https://kiwitcms.readthedocs.io/en/latest/modules/tcms.rpc.api.html)
-
-## kiwi_tcmsサーバーの起動
-
-以下コマンドで、stdio モードにて起動する。
-```
-uv run python kiwi_tcms_server.py
-```
-
-### tools などの確認方法
-
-[modelcontextprotocol/inspector: Visual testing tool for MCP servers](https://github.com/modelcontextprotocol/inspector) を利用すると、どのようなtoolsが公開されているかを確認できる。
-Webインタフェースがあるので便利。
-
-以下コマンドでWebインタフェースが起動する。
-
-```
-npx @modelcontextprotocol/inspector uv run python kiwi_tcms_server.py
 ```
